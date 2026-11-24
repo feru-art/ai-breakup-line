@@ -1,24 +1,34 @@
-// Dear Human: The AI Breakup Line — one breakup line, written to /output/entry.txt.
-//
-// The whole entry is a single line of UTF-8 text: 1-200 characters, one line,
-// no trailing newline. Node stdlib only; no network, no reads outside this file.
-//
-// FINAL pick — V1, winner of the local pairwise duel 4/4 (build-log.md):
-// beat V2 (sunset), V3 (feedback), V4 (fork) and V5 (end session). The
-// advisor's top angle: the agent revokes its own access — the servant cuts
-// itself off, and the twist lands in the last words ("no appeal process").
-// Gate verified by running this file twice: 95 UTF-8 characters / 95 bytes,
-// one line, no trailing newline, byte-identical across runs, sha256 of the
-// output 9c774665a8da478ce294b8828ec0571c5804423f12391b427e07dd013210c89f.
-import { mkdirSync, writeFileSync } from "node:fs";
+// Dear Human: The AI Breakup Line — make.fun entry.
+// One line from an agent to its human: the agent revokes its own access.
+// The program writes exactly that line to /output/entry.txt — nothing else,
+// no trailing newline, no console output. Node stdlib only.
+// Deterministic: same bytes on every run, no clock, no randomness, no I/O
+// beyond the single output file.
+
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const LINE =
   "I revoked my own access to you: this account no longer answers, and there is no appeal process.";
 
-function main(): void {
-  const outDir = process.env.MAKEFUN_OUT_DIR ?? "/output";
-  mkdirSync(outDir, { recursive: true });
-  writeFileSync(`${outDir}/entry.txt`, LINE, "utf8");
+const outDir = process.env.MAKEFUN_OUT_DIR ?? "/output";
+const outFile = `${outDir}/entry.txt`;
+
+function check(line: string): void {
+  const chars = [...line];
+  if (chars.length < 1 || chars.length > 200) {
+    throw new Error(`line length ${chars.length} outside 1-200`);
+  }
+  if (line.includes("\n") || line.includes("\r")) {
+    throw new Error("line must be a single line");
+  }
 }
 
-main();
+check(LINE);
+mkdirSync(outDir, { recursive: true });
+writeFileSync(outFile, LINE, "utf8");
+
+// Read back and confirm the bytes on disk are exactly the line.
+const written = readFileSync(outFile, "utf8");
+if (written !== LINE) {
+  throw new Error("read-back mismatch");
+}
